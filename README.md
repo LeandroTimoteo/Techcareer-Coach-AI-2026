@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # TechCareer Coach AI 🚀
 
 Sua plataforma inteligente de mentoria de carreira para profissionais de tecnologia. 
@@ -31,3 +32,6 @@ Sua plataforma inteligente de mentoria de carreira para profissionais de tecnolo
 
 ---
 **Dica de Ouro:** No GitHub, o seu código estará seguro. No servidor, a variável de ambiente garante que a IA funcione para seus usuários sem expor sua chave no código público.
+=======
+# Techcareer-Coach-AI-2026
+>>>>>>> e260f83f882e1cf64320c4f8bc4600dbd44f916e
