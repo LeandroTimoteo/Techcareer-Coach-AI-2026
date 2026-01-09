@@ -1,0 +1,41 @@
+﻿/* Fundo claro (default) */
+body {
+  background-color: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Fundo escuro */
+body.dark {
+  background-color: #121212;
+  color: #ffffff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Botões no modo claro → escuros */
+button {
+  background-color: #000000; /* fundo preto */
+  color: #ffffff;            /* texto branco */
+  border: 1px solid #333;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+  background-color: #222; /* cinza mais claro no hover */
+}
+
+/* Botões no modo escuro → claros */
+body.dark button {
+  background-color: #ffffff; /* fundo branco */
+  color: #000000;            /* texto preto */
+  border: 1px solid #ddd;
+}
+
+body.dark button:hover {
+  background-color: #f5f5f5; /* leve cinza no hover */
+}
+
+
+
+
+
