@@ -1,37 +1,102 @@
-<<<<<<< HEAD
-# TechCareer Coach AI 🚀
+# 🚀 TechCareer Coach AI
 
-Sua plataforma inteligente de mentoria de carreira para profissionais de tecnologia. 
-
-## 🎯 Funcionalidades
-- **CV Review**: Otimização técnica para sistemas ATS (filtros de RH).
-- **LinkedIn Boost**: Melhore seu branding pessoal para atrair recrutadores.
-- **Preparação de Entrevistas**: Simule perguntas reais (Método STAR).
-- **Networking Estratégico**: Scripts de abordagem que funcionam.
-
-## 💻 Como Rodar no VS Code
-
-1. **Baixe ou Clone** este repositório.
-2. Certifique-se de que o arquivo `.env.local` existe na raiz com sua chave:
-   ```env
-   API_KEY=AIzaSyBA0WjHT41zTGLD0eaibtdMAFV1PC-iozY
-   ```
-3. **Inicie o servidor**:
-   - Se tiver a extensão **Live Server**, clique em "Go Live" no `index.html`.
-   - Ou use o terminal: `npx serve .`
-
-## 🌍 Como Subir para o Servidor (Vercel/Netlify)
-
-1. **Suba para o GitHub**: O arquivo `.gitignore` já protege sua chave (ele ignora o `.env.local`).
-2. **Configure no Servidor**:
-   - No painel da Vercel/Netlify, vá em **Environment Variables**.
-   - Adicione uma nova variável:
-     - **Key:** `API_KEY`
-     - **Value:** `AIzaSyBA0WjHT41zTGLD0eaibtdMAFV1PC-iozY`
-3. O deploy será feito automaticamente e o site estará no ar!
+An intelligent platform for **career mentorship in technology**, designed to help professionals stand out in the job market with practical tips, simulations, and personalized optimizations.
 
 ---
-**Dica de Ouro:** No GitHub, o seu código estará seguro. No servidor, a variável de ambiente garante que a IA funcione para seus usuários sem expor sua chave no código público.
-=======
-# Techcareer-Coach-AI-2026
->>>>>>> e260f83f882e1cf64320c4f8bc4600dbd44f916e
+
+## 🎯 Features
+
+- **CV Review**: Optimize resumes for ATS (HR filters).
+- **LinkedIn Boost**: Improve personal branding to attract recruiters.
+- **Interview Preparation**: Simulate real questions using the STAR method.
+- **Strategic Networking**: Scripts and approaches that actually work.
+
+---
+
+## 🛠️ Tech Stack
+
+- **React + Vite** for a fast and modern frontend.
+- **TailwindCSS** for responsive styling.
+- **OpenRouter API** for advanced AI model integration.
+- **TypeScript** for safer and more productive coding.
+
+---
+
+## 💻 Running Locally
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/techcareer-coach-ai.git
+   cd techcareer-coach-ai
+
+# Install dependencies:
+
+bash
+npm install
+Configure environment variables:
+Create a .env.local file in the project root with your OpenRouter API key:
+
+bash
+npm run dev
+Access the app at:
+👉 http://localhost:3000
+
+# 🌍 Deployment (Vercel / Netlify)
+Push to GitHub:
+The .gitignore file already protects your API key (ignores .env.local).
+
+Configure environment variables on the server:
+
+Go to Environment Variables in the Vercel/Netlify dashboard.
+
+# Add:
+
+Key: VITE_OPENROUTER_API_KEY
+
+Value: your_api_key
+
+Key: VITE_MODEL_ID
+
+Value: mistralai/mistral-small-3.1-24b-instruct:free
+
+Deployment will be automatic and your site will be live.
+
+# 📌 Roadmap
+[ ] Add multilingual support (PT/EN).
+
+[ ] Implement automatic fallback between free models.
+
+[ ] Improve UI with career progress dashboards.
+
+[ ] Publish a mobile-friendly version.
+
+🤝 Contributing
+Contributions are welcome!
+To collaborate:
+
+# Fork the project.
+
+Create a branch (git checkout -b feature/new-feature).
+
+Commit your changes (git commit -m 'feat: add new feature').
+
+Push (git push origin feature/new-feature).
+
+Open a Pull Request.
+
+# 📜 License
+This project is licensed under the MIT License.
+Copyright © 2026 Leandro Timóteo — Systems Analyst / Software Engineering
+
+## 📬 Contact
+
+- 📧 [Email](mailto:leandrinhots6@gmail.com)  
+- 💼 [LinkedIn](https://www.linkedin.com/in/leandro-timóteo-ads)  
+- 📱 [WhatsApp](https://wa.me/5583987830223)  
+- 📷 [Instagram](https://www.instagram.com/leandrinho_fi)
+
+## 📸 Screenshot
+
+![TechCareer Coach AI Screenshot](./imagem/screenshot.png)
+
+
