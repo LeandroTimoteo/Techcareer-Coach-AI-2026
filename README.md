@@ -95,6 +95,9 @@ Copyright © 2026 Leandro Timóteo — Systems Analyst / Software Engineering
 - 📱 [WhatsApp](https://wa.me/5583987830223)  
 - 📷 [Instagram](https://www.instagram.com/leandrinho_fi)
 
+## 🚀 Live Demo Access the project here:
+ [TechCareer Coach AI 2026](https://techcareer-coach-ai-2026.vercel.app/)
+
 ## 📸 Screenshot
 
 ![TechCareer Coach AI Screenshot](./imagem/screenshot.png)
