@@ -3,15 +3,16 @@ import { Language } from "../types";
 // 🔎 Debug: mostra todas as variáveis carregadas pelo Vite
 console.log("Variáveis carregadas pelo Vite:", import.meta.env);
 
-// ✅ Usa a variável correta do .env.local
-const API_KEY: string | undefined = import.meta.env.VITE_OPENROUTER_API_KEY;
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+// ✅ Garantimos que a URL termine com o endpoint correto se o usuário passar apenas o host
+let base_url = import.meta.env.VITE_OLLAMA_API_URL || "http://localhost:11434";
+if (base_url.endsWith("/")) base_url = base_url.slice(0, -1);
+const API_URL = base_url.includes("/api/") ? base_url : `${base_url}/api/chat`;
 
-// ✅ Modelo configurado com fallback para Mistral 7B Instruct (free)
-const MODEL_ID: string = import.meta.env.VITE_MODEL_ID || "mistralai/mistral-7b-instruct:free";
+// ✅ Modelo configurado com fallback para stable-beluga
+const MODEL_ID: string = import.meta.env.VITE_MODEL_ID || "stable-beluga:latest";
 
-// Confirma se a chave e o modelo foram carregados
-console.log("API KEY carregada:", API_KEY ? "OK" : "NÃO ENCONTRADA");
+// Confirma se o modelo foi carregado
+console.log("URL Final da API:", API_URL);
 console.log("Modelo configurado:", MODEL_ID);
 
 const getSystemInstruction = (language: Language) => `
@@ -35,15 +36,11 @@ export const generateCareerAdvice = async (
   language: Language
 ): Promise<string> => {
   try {
-    if (!API_KEY || API_KEY.trim() === "") {
-      throw new Error("API Key não encontrada. Verifique seu arquivo .env.local");
-    }
-
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY.trim()}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${import.meta.env.VITE_OLLAMA_API_KEY || ""}`,
       },
       body: JSON.stringify({
         model: MODEL_ID,
@@ -51,37 +48,53 @@ export const generateCareerAdvice = async (
           { role: "system", content: getSystemInstruction(language) },
           { role: "user", content: prompt },
         ],
+        stream: false, // Fundamental para receber um JSON completo
       }),
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    console.log("Raw Ollama Response:", rawText);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error("Failed to parse Ollama response as JSON:", rawText);
+      throw new Error("Resposta da IA inválida (não é JSON). Verifique se o Ollama está respondendo corretamente.");
+    }
 
     // ✅ Tratamento de erros da API
     if (!response.ok || data.error) {
-      const errorMessage = data.error?.message || `${response.status} ${response.statusText}`;
-      console.error("OpenRouter Error Response:", data);
+      const errorMessage = data.error?.message || data.error || `${response.status} ${response.statusText}`;
+      console.error("Ollama Error Response:", data);
 
-      if (response.status === 429 || errorMessage.includes("Rate limit")) {
+      if (response.status === 429 || (typeof errorMessage === 'string' && errorMessage.includes("Rate limit"))) {
         return language === "pt"
-          ? "⚠️ Limite diário atingido. Tente novamente amanhã ou adicione créditos no OpenRouter."
-          : "⚠️ Daily limit reached. Try again tomorrow or add credits on OpenRouter.";
+          ? "⚠️ Limite diário atingido. Tente novamente amanhã."
+          : "⚠️ Daily limit reached. Try again tomorrow.";
       }
 
-      return language === "pt"
-        ? "Ocorreu um erro na geração. Verifique sua chave API ou modelo configurado."
-        : "Error generating content. Check your API Key or configured model.";
+      throw new Error(errorMessage);
     }
 
     // ✅ Retorno seguro do conteúdo
     return (
-      data.choices?.[0]?.message?.content?.trim() ||
+      data.message?.content?.trim() ||
       (language === "pt" ? "Ocorreu um erro na geração." : "Error generating content.")
     );
   } catch (error: any) {
-    console.error("OpenRouter Error:", error);
+    console.error("Ollama Error:", error);
+
+    const isSyntaxError = error instanceof SyntaxError || error.message?.includes("JSON");
+    
+    if (isSyntaxError) {
+      return language === "pt"
+        ? "❌ Erro de formato na resposta da IA. Certifique-se de que a URL da API está correta e o serviço Ollama está saudável."
+        : "❌ AI response format error. Ensure the API URL is correct and Ollama is healthy.";
+    }
 
     return language === "pt"
-      ? "Erro de conexão com a IA. Verifique sua chave API ou modelo configurado."
-      : "AI Connection error. Check your API Key or configured model.";
+      ? `Erro na IA: ${error.message || "Erro de conexão"}. Verifique o Ollama.`
+      : `AI Error: ${error.message || "Connection error"}. Check Ollama.`;
   }
 };

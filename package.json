@@ -7,7 +7,8 @@
     "start": "vite --open",
     "dev": "vite --open",
     "build": "vite build",
-    "preview": "vite preview --open"
+    "preview": "vite preview --open",
+    "test": "npx vitest"
   },
   "keywords": [
     "ai",
@@ -21,11 +22,12 @@
   "author": "TechCoach AI Team",
   "license": "MIT",
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "vite": "^7.3.1"
+    "vite": "^5.4.0",
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

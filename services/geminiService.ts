@@ -1,17 +1,19 @@
 import { Language } from "../types";
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-// Usa modelos que garantidamente funcionam com free tier
-const MODEL_ID = import.meta.env.VITE_MODEL_ID || 'tngtech/deepseek-r1t2-chimera:free';
+const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY;
+// Usa a URL do Ollama ou localhost por padrão
+const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL || 'http://localhost:11434';
+const MODEL_ID = import.meta.env.VITE_MODEL_ID || 'stable-beluga';
 
 // Debug logs
 console.log('Variáveis carregadas pelo Vite:', {
-  key: OPENROUTER_API_KEY ? 'OK' : 'FALTANDO',
+  key: OLLAMA_API_KEY ? 'OK' : 'FALTANDO',
+  url: OLLAMA_API_URL,
   model: MODEL_ID
 });
-if (OPENROUTER_API_KEY) {
+if (OLLAMA_API_KEY) {
   console.log('API KEY carregada: OK');
-  console.log('Chave iniciada com:', OPENROUTER_API_KEY.substring(0, 15) + '...');
+  console.log('Chave iniciada com:', OLLAMA_API_KEY.substring(0, 15) + '...');
 }
 console.log('Modelo configurado:', MODEL_ID);
 
@@ -38,9 +40,9 @@ export const generateCareerAdvice = async (
   try {
     const systemInstruction = getSystemInstruction(language);
     
-    console.log('🚀 Enviando requisição para OpenRouter');
+    console.log('🚀 Enviando requisição para Ollama');
     console.log('Modelo usado:', MODEL_ID);
-    console.log('Chave API presente:', !!OPENROUTER_API_KEY);
+    console.log('URL Ollama:', OLLAMA_API_URL);
     
     const payload = {
       model: MODEL_ID,
@@ -60,17 +62,17 @@ export const generateCareerAdvice = async (
     
     console.log('📤 Payload completo:', JSON.stringify(payload, null, 2));
     
-    // Headers para OpenRouter
     const headers: HeadersInit = {
-      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-      'X-Title': 'TechCareer Coach AI',
     };
+
+    if (OLLAMA_API_KEY) {
+       headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+    }
     
     console.log('📌 Headers enviados:', Object.keys(headers));
     
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`${OLLAMA_API_URL}/v1/chat/completions`, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload)
@@ -94,7 +96,7 @@ export const generateCareerAdvice = async (
     if (!response.ok) {
       console.error('❌ Erro da API (Status', response.status + '):', data);
       const errorMsg = data?.error?.message || data?.error || `HTTP ${response.status}`;
-      throw new Error(`Erro OpenRouter: ${errorMsg}`);
+      throw new Error(`Erro Ollama: ${errorMsg}`);
     }
 
     const content = data.choices?.[0]?.message?.content;
@@ -111,5 +113,3 @@ export const generateCareerAdvice = async (
     throw new Error(language === 'pt' ? `Erro na IA: ${msg}` : `AI Error: ${msg}`);
   }
 };
-
-
