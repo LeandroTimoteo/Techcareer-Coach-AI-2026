@@ -1,4 +1,3 @@
-notepad package.json
 import express from "express";
 import path from "path";
 
@@ -21,3 +20,4 @@ app.get("*", (req, res) => {
 
 const port = process.env.PORT || 10000;
 app.listen(port, () => console.log(`Servidor rodando na porta ${port}`));
+
