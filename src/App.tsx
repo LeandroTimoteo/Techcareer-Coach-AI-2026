@@ -69,7 +69,7 @@ export default function App() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }) // ✅ campo correto
+        body: JSON.stringify({ message: userMessage })
       });
       const data = await res.json();
       setChat(prev => [...prev, { role: 'assistant', content: data.reply || "Erro na resposta" }]);
@@ -180,10 +180,4 @@ export default function App() {
       </aside>
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 flex items-center justify-between shrink-0">
-          <h2 className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">{activeTool}</h2>
-          <div className="flex items-center gap-4">
-            {/* Botão de idioma */}
-            <button
-
-
-
+          <h2 className="font-bold text-slate-700 dark:text-slate-200 uppercase
