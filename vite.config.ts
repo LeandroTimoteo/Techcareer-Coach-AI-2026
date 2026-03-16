@@ -18,11 +18,17 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: "0.0.0.0",
       open: true,
+      allowedHosts: true,
+    },
+    preview: {
+      port: 4173,
+      host: "0.0.0.0",
+      allowedHosts: true, // ✅ libera todos os domínios para evitar erros de bloqueio
     },
     plugins: [react()],
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: "jsdom",
     },
     resolve: {
       alias: {
