@@ -4,11 +4,10 @@
   "description": "AI-powered Career Coach for Tech Professionals",
   "main": "index.html",
   "scripts": {
-    "start": "vite --open",
     "dev": "vite --open",
     "build": "vite build",
     "preview": "vite preview --open",
-    "test": "npx vitest"
+    "start": "serve -s dist"
   },
   "keywords": [
     "ai",
@@ -35,6 +34,7 @@
     "node-fetch": "^2.7.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "serve": "^14.2.6"
   }
 }
