@@ -21,6 +21,8 @@ const translations = {
     ready: 'Pronto para agir?',
     accessLinkedin: 'Abrir LinkedIn',
     tipPrompt: "Dê uma dica curta de carreira tech em 2 frases.",
+    chatPlaceholder: "Digite sua mensagem...",
+    send: "Enviar"
   },
   en: {
     sidebarTitle: 'Tech Coach',
@@ -29,6 +31,8 @@ const translations = {
     ready: 'Ready to act?',
     accessLinkedin: 'Open LinkedIn',
     tipPrompt: "Give a short tech career tip in 2 sentences.",
+    chatPlaceholder: "Type your message...",
+    send: "Send"
   }
 };
 
@@ -36,7 +40,9 @@ export default function App() {
   const [activeTool, setActiveTool] = useState<ToolId>('dashboard');
   const [language, setLanguage] = useState<Language>('pt');
   const [dailyTip, setDailyTip] = useState('');
-  const [darkMode, setDarkMode] = useState(false); // ✅ estado para tema
+  const [darkMode, setDarkMode] = useState(false);
+  const [chat, setChat] = useState<{ role: string; content: string }[]>([]);
+  const [input, setInput] = useState('');
   const t = translations[language];
 
   useEffect(() => {
@@ -45,7 +51,6 @@ export default function App() {
       .catch(() => setDailyTip(language === 'pt' ? 'Sempre continue aprendendo!' : 'Always keep learning!'));
   }, [language]);
 
-  // ✅ aplica/remover classe dark no body
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add('dark');
@@ -53,6 +58,26 @@ export default function App() {
       document.body.classList.remove('dark');
     }
   }, [darkMode]);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const userMessage = input.trim();
+    setChat([...chat, { role: 'user', content: userMessage }]);
+    setInput('');
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage }) // ✅ campo correto
+      });
+      const data = await res.json();
+      setChat(prev => [...prev, { role: 'assistant', content: data.reply || "Erro na resposta" }]);
+    } catch (err) {
+      console.error("Erro ao enviar mensagem:", err);
+      setChat(prev => [...prev, { role: 'assistant', content: "Erro ao conectar com o servidor." }]);
+    }
+  };
 
   const renderContent = () => {
     switch (activeTool) {
@@ -72,6 +97,39 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* ✅ Chat integrado */}
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
+              <div className="h-64 overflow-y-auto space-y-2 mb-4">
+                {chat.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`p-3 rounded-lg max-w-xs ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white ml-auto'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white mr-auto'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={t.chatPlaceholder}
+                  className="flex-1 border rounded-lg px-3 py-2 dark:bg-slate-700 dark:text-white"
+                />
+                <button
+                  onClick={sendMessage}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  {t.send}
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {tools.filter(tool => tool.id !== 'dashboard').map(tool => (
                 <button
@@ -121,30 +179,4 @@ export default function App() {
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 flex items-center justify-between shrink-0">
-          <h2 className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">{activeTool}</h2>
-          <div className="flex items-center gap-4">
-            {/* Botão de idioma */}
-            <button
-              onClick={() => setLanguage(l => l === 'pt' ? 'en' : 'pt')}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full border hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium"
-            >
-              <Globe className="w-4 h-4"/> {language === 'pt' ? 'Português' : 'English'}
-            </button>
-            {/* Botão de tema */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full border hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium"
-            >
-              {darkMode ? <Sun className="w-4 h-4"/> : <Moon className="w-4 h-4"/>}
-              {darkMode ? 'Claro' : 'Escuro'}
-            </button>
-          </div>
-        </header>
-        <div className="flex-1 overflow-y-auto p-4 lg:p-12">
-          <div className="max-w-3xl mx-auto">{renderContent()}</div>
-        </div>
-      </main>
-    </div>
-  );
-}
+        <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8
