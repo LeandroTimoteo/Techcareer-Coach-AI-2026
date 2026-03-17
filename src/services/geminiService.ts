@@ -1,18 +1,22 @@
 import { Language } from "../types";
 
-// 🔎 Debug: mostra todas as variáveis carregadas pelo Vite
+const sanitizeBaseUrl = (url: string) => {
+  let sanitized = url.trim();
+  if (!sanitized) {
+    sanitized = "http://localhost:11434";
+  }
+  sanitized = sanitized.replace(/\/+$/, ""); // remove trailing slashes
+  sanitized = sanitized.replace(/\/api$/, ""); // evita duplicar /api
+  return sanitized;
+};
+
+export const OLLAMA_API_HOST = sanitizeBaseUrl(import.meta.env.VITE_OLLAMA_API_URL || "http://localhost:11434");
+export const OLLAMA_API_ENDPOINT = `${OLLAMA_API_HOST}/api/generate`;
+export const MODEL_ID: string = import.meta.env.VITE_MODEL_ID || "stable-beluga:latest";
+
 console.log("Variáveis carregadas pelo Vite:", import.meta.env);
-
-// ✅ Garantimos que a URL termine com o endpoint correto se o usuário passar apenas o host
-let base_url = import.meta.env.VITE_OLLAMA_API_URL || "http://localhost:11434";
-if (base_url.endsWith("/")) base_url = base_url.slice(0, -1);
-const API_URL = base_url.includes("/api/") ? base_url : `${base_url}/api/chat`;
-
-// ✅ Modelo configurado com fallback para stable-beluga
-const MODEL_ID: string = import.meta.env.VITE_MODEL_ID || "stable-beluga:latest";
-
-// Confirma se o modelo foi carregado
-console.log("URL Final da API:", API_URL);
+console.log("Host da API Ollama:", OLLAMA_API_HOST);
+console.log("Endpoint final da API:", OLLAMA_API_ENDPOINT);
 console.log("Modelo configurado:", MODEL_ID);
 
 const getSystemInstruction = (language: Language) => `
@@ -36,19 +40,24 @@ export const generateCareerAdvice = async (
   language: Language
 ): Promise<string> => {
   try {
-    const response = await fetch(API_URL, {
+    const finalPrompt = `${getSystemInstruction(language)}\n\n${prompt}`.trim();
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    const apiKey = import.meta.env.VITE_OLLAMA_API_KEY;
+    if (apiKey) {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    }
+
+    const response = await fetch(OLLAMA_API_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${import.meta.env.VITE_OLLAMA_API_KEY || ""}`,
-      },
+      headers,
       body: JSON.stringify({
         model: MODEL_ID,
-        messages: [
-          { role: "system", content: getSystemInstruction(language) },
-          { role: "user", content: prompt },
-        ],
-        stream: false, // Fundamental para receber um JSON completo
+        prompt: finalPrompt,
+        stream: false,
       }),
     });
 
@@ -63,8 +72,18 @@ export const generateCareerAdvice = async (
       throw new Error("Resposta da IA inválida (não é JSON). Verifique se o Ollama está respondendo corretamente.");
     }
 
-    // ✅ Tratamento de erros da API
-    if (!response.ok || data.error) {
+    const assistantResponseBase =
+      typeof data.response === "string"
+        ? data.response
+        : Array.isArray(data.response)
+          ? data.response.join("\n")
+          : data.response;
+
+    const assistantResponse = typeof assistantResponseBase === "string"
+      ? assistantResponseBase.trim()
+      : assistantResponseBase;
+
+    if (!response.ok || data.error || !assistantResponse) {
       const errorMessage = data.error?.message || data.error || `${response.status} ${response.statusText}`;
       console.error("Ollama Error Response:", data);
 
@@ -78,10 +97,7 @@ export const generateCareerAdvice = async (
     }
 
     // ✅ Retorno seguro do conteúdo
-    return (
-      data.message?.content?.trim() ||
-      (language === "pt" ? "Ocorreu um erro na geração." : "Error generating content.")
-    );
+    return String(assistantResponse);
   } catch (error: any) {
     console.error("Ollama Error:", error);
 

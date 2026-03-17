@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, FileText, Linkedin, MessageSquare, Users, Sparkles, Globe, Moon, Sun } from 'lucide-react';
 import { ToolId, ToolConfig, Language } from './types';
 import { ResumeTool, LinkedInTool, InterviewTool, NetworkingTool } from './components/Tools';
-import { generateCareerAdvice } from './services/geminiService';
+import { generateCareerAdvice, MODEL_ID, OLLAMA_API_ENDPOINT } from './services/geminiService';
 import './theme.css'; // ✅ Import correto do CSS para tema claro/escuro
 
 const tools: ToolConfig[] = [
@@ -62,20 +62,62 @@ export default function App() {
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMessage = input.trim();
-    setChat([...chat, { role: 'user', content: userMessage }]);
+    setChat(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput('');
 
     try {
-      const res = await fetch("/api/chat", {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const apiKey = import.meta.env.VITE_OLLAMA_API_KEY;
+      if (apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
+
+      const res = await fetch(OLLAMA_API_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage })
+        headers,
+        body: JSON.stringify({
+          model: MODEL_ID,
+          prompt: userMessage,
+          stream: false,
+        }),
       });
-      const data = await res.json();
-      setChat(prev => [...prev, { role: 'assistant', content: data.reply || "Erro na resposta" }]);
-    } catch (err) {
+
+      const payloadText = await res.text();
+      console.log("Chat API Response:", payloadText);
+
+      let data: any = {};
+      if (payloadText) {
+        try {
+          data = JSON.parse(payloadText);
+        } catch (parseError) {
+          console.error("Erro ao interpretar resposta da API de chat:", parseError, payloadText);
+          throw new Error("A resposta da API está em um formato inesperado.");
+        }
+      }
+
+      const assistantReplyBase =
+        typeof data.response === "string"
+          ? data.response
+          : Array.isArray(data.response)
+            ? data.response.join("\n")
+            : null;
+
+      const assistantReply = typeof assistantReplyBase === "string"
+        ? assistantReplyBase.trim()
+        : assistantReplyBase;
+
+      if (!res.ok || !assistantReply) {
+        const message = data.error?.message || data.error || `${res.status} ${res.statusText}`;
+        console.error("Chat API retornou erro:", message, data);
+        throw new Error(message);
+      }
+
+      setChat(prev => [...prev, { role: 'assistant', content: assistantReply }]);
+    } catch (err: any) {
       console.error("Erro ao enviar mensagem:", err);
-      setChat(prev => [...prev, { role: 'assistant', content: "Erro ao conectar com o servidor." }]);
+      setChat(prev => [...prev, { role: 'assistant', content: err.message || "Erro ao conectar com o servidor." }]);
     }
   };
 
@@ -148,7 +190,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-900">
       <aside className="w-full lg:w-64 bg-white dark:bg-slate-800 border-b lg:border-r border-slate-200 dark:border-slate-700 p-6 flex flex-col">
         <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2 mb-8">
           <Sparkles className="w-5 h-5"/> {t.sidebarTitle}
@@ -178,6 +220,34 @@ export default function App() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 flex items-center justify-between shrink-0">
-          <h2 className="font-bold text-slate-700 dark:text-slate-200 uppercase
+      <main className="flex-1 flex flex-col min-h-screen">
+        <header
+          className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 flex items-center justify-between shrink-0"
+          role="banner"
+        >
+          <h2 className="font-bold text-slate-700 dark:text-slate-200 uppercase">
+            Tech Career Coach AI
+          </h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLanguage(l => (l === 'pt' ? 'en' : 'pt'))}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full border hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium"
+            >
+              <Globe className="w-4 h-4"/> {language === 'pt' ? 'Português' : 'English'}
+            </button>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full border hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium"
+            >
+              {darkMode ? <Sun className="w-4 h-4"/> : <Moon className="w-4 h-4"/>}
+              {darkMode ? 'Claro' : 'Escuro'}
+            </button>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 lg:p-12">
+          <div className="max-w-3xl mx-auto">{renderContent()}</div>
+        </div>
+      </main>
+    </div>
+  );
+}
