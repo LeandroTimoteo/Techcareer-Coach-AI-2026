@@ -1,7 +1,8 @@
 ﻿import { Language } from '../types';
 
 const API_ENDPOINT = '/api/generate';
-export const MODEL_ID: string = import.meta.env.VITE_MODEL_ID || 'stable-beluga:latest';
+export const MODEL_ID: string =
+  import.meta.env.VITE_MODEL_ID || 'stable-beluga:latest';
 
 console.log('Variáveis carregadas pelo Vite:', import.meta.env);
 console.log('Endpoint da API interna:', API_ENDPOINT);
@@ -42,55 +43,33 @@ export const generateCareerAdvice = async (
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`${response.status} ${response.statusText}`);
-    }
-
-    const contentLength = response.headers.get('content-length');
-    if (contentLength === '0') {
-      throw new Error('Resposta da API vazia.');
-    }
-
     const data = await response.json();
 
-    const assistantResponseBase =
-      typeof data.response === 'string'
-        ? data.response
-        : Array.isArray(data.response)
-          ? data.response.join('\n')
-          : data.response;
-
-    const assistantResponse = typeof assistantResponseBase === 'string'
-      ? assistantResponseBase.trim()
-      : assistantResponseBase;
-
-    if (data.error || !assistantResponse) {
-      const errorMessage = data.error?.message || data.error || 'Resposta inesperada.';
-      console.error('Ollama Proxy Error:', data);
-
-      if (typeof errorMessage === 'string' && errorMessage.includes('Rate limit')) {
+    if (!response.ok) {
+      if (response.status === 429) {
         return language === 'pt'
           ? '⚠️ Limite diário atingido. Tente novamente amanhã.'
           : '⚠️ Daily limit reached. Try again tomorrow.';
       }
 
-      throw new Error(errorMessage);
+      return 'Error generating content. Check your configured model.';
     }
 
-    return String(assistantResponse);
-  } catch (error: any) {
+    const assistantResponse =
+      typeof data.response === 'string'
+        ? data.response.trim()
+        : '';
+
+    if (!assistantResponse) {
+      return 'Error generating content. Check your configured model.';
+    }
+
+    return assistantResponse;
+  } catch (error) {
     console.error('Ollama Proxy Error:', error);
 
-    const isSyntaxError = error instanceof SyntaxError || error.message?.includes('JSON');
-    
-    if (isSyntaxError) {
-      return language === 'pt'
-        ? '❌ Erro de formato na resposta da IA. Certifique-se de que o backend está retornando JSON.'
-        : '❌ AI response format error. Ensure the backend is returning JSON.';
-    }
-
     return language === 'pt'
-      ? `Erro na IA: ${error.message || 'Erro de conexão'}. Verifique o backend.`
-      : `AI Error: ${error.message || 'Connection error'}. Check the backend.`;
+      ? 'Erro de conexão com IA. Verifique se o backend está ativo.'
+      : 'AI Connection error. Check if Ollama is running and the configured model is correct.';
   }
 };

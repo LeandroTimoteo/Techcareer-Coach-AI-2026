@@ -9,21 +9,24 @@ describe('generateCareerAdvice', () => {
   it('should return career advice on successful API call', async () => {
     const mockResponse = {
       ok: true,
-      json: () => Promise.resolve({
-        message: { content: '  Your career advice is to learn Vitest!  ' }
-      }),
+      json: () =>
+        Promise.resolve({
+          response: '  Your career advice is to learn Vitest!  ',
+        }),
     };
-    global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+    global.fetch = vi.fn().mockResolvedValue(mockResponse as Response);
 
     const advice = await generateCareerAdvice('test prompt', 'general', 'en');
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.any(String),
+      '/api/generate',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"prompt":"test prompt"'),
+        body: expect.stringContaining('test prompt'),
       })
     );
+
     expect(advice).toBe('Your career advice is to learn Vitest!');
   });
 
@@ -32,9 +35,13 @@ describe('generateCareerAdvice', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-      json: () => Promise.resolve({ error: { message: 'Internal server error' } }),
+      json: () =>
+        Promise.resolve({
+          error: 'Internal server error',
+        }),
     };
-    global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+    global.fetch = vi.fn().mockResolvedValue(mockResponse as Response);
 
     const advice = await generateCareerAdvice('test prompt', 'general', 'en');
 
@@ -46,7 +53,9 @@ describe('generateCareerAdvice', () => {
 
     const advice = await generateCareerAdvice('test prompt', 'general', 'en');
 
-    expect(advice).toBe('AI Connection error. Check if Ollama is running and the configured model is correct.');
+    expect(advice).toBe(
+      'AI Connection error. Check if Ollama is running and the configured model is correct.'
+    );
   });
 
   it('should handle rate limiting error message in portuguese', async () => {
@@ -54,11 +63,16 @@ describe('generateCareerAdvice', () => {
       ok: false,
       status: 429,
       statusText: 'Too Many Requests',
-      json: () => Promise.resolve({ error: { message: 'Rate limit exceeded' } }),
+      json: () =>
+        Promise.resolve({
+          error: 'Rate limit exceeded',
+        }),
     };
-    global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+    global.fetch = vi.fn().mockResolvedValue(mockResponse as Response);
 
     const advice = await generateCareerAdvice('test prompt', 'general', 'pt');
+
     expect(advice).toBe('⚠️ Limite diário atingido. Tente novamente amanhã.');
   });
 });
