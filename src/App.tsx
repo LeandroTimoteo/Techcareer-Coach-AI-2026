@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, FileText, Linkedin, MessageSquare, Users, Sparkles, Globe, Moon, Sun } from 'lucide-react';
 import { ToolId, ToolConfig, Language } from './types';
 import { ResumeTool, LinkedInTool, InterviewTool, NetworkingTool } from './components/Tools';
-import { generateCareerAdvice, MODEL_ID, OLLAMA_API_ENDPOINT } from './services/geminiService';
+import { generateCareerAdvice, MODEL_ID } from './services/geminiService';
 import './theme.css'; // ✅ Import correto do CSS para tema claro/escuro
 
 const tools: ToolConfig[] = [
@@ -66,17 +66,11 @@ export default function App() {
     setInput('');
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      const apiKey = import.meta.env.VITE_OLLAMA_API_KEY;
-      if (apiKey) {
-        headers["Authorization"] = `Bearer ${apiKey}`;
-      }
-
-      const res = await fetch(OLLAMA_API_ENDPOINT, {
+      const response = await fetch("/api/generate", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           model: MODEL_ID,
           prompt: userMessage,
@@ -84,32 +78,28 @@ export default function App() {
         }),
       });
 
-      const payloadText = await res.text();
-      console.log("Chat API Response:", payloadText);
-
-      let data: any = {};
-      if (payloadText) {
-        try {
-          data = JSON.parse(payloadText);
-        } catch (parseError) {
-          console.error("Erro ao interpretar resposta da API de chat:", parseError, payloadText);
-          throw new Error("A resposta da API está em um formato inesperado.");
-        }
+      if (!response.ok) {
+        const text = await response.text();
+        const message = text || `${response.status} ${response.statusText}`;
+        console.error("Chat API retornou erro:", message);
+        throw new Error(message);
       }
+
+      const data = await response.json();
 
       const assistantReplyBase =
         typeof data.response === "string"
           ? data.response
           : Array.isArray(data.response)
             ? data.response.join("\n")
-            : null;
+            : data.response;
 
       const assistantReply = typeof assistantReplyBase === "string"
         ? assistantReplyBase.trim()
         : assistantReplyBase;
 
-      if (!res.ok || !assistantReply) {
-        const message = data.error?.message || data.error || `${res.status} ${res.statusText}`;
+      if (!assistantReply) {
+        const message = "Resposta da IA vazia";
         console.error("Chat API retornou erro:", message, data);
         throw new Error(message);
       }
