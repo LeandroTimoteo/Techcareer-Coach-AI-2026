@@ -1,12 +1,8 @@
-﻿import { Language } from '../types';
+import { Language } from '../types';
 
 const API_ENDPOINT = '/api/generate';
 export const MODEL_ID: string =
-  import.meta.env.VITE_MODEL_ID || 'stable-beluga:latest';
-
-console.log('Variáveis carregadas pelo Vite:', import.meta.env);
-console.log('Endpoint da API interna:', API_ENDPOINT);
-console.log('Modelo configurado:', MODEL_ID);
+  import.meta.env.VITE_MODEL_ID || 'mistralai/mistral-small-3.1-24b-instruct:free';
 
 const getSystemInstruction = (language: Language) => `
 Você é o 'TechCareer Coach', um mentor sênior de carreira em tecnologia.
@@ -43,8 +39,7 @@ export const generateCareerAdvice = async (
       }),
     });
 
-    const data = await response.json();
-
+    // Check status BEFORE trying to parse JSON
     if (!response.ok) {
       if (response.status === 429) {
         return language === 'pt'
@@ -53,6 +48,13 @@ export const generateCareerAdvice = async (
       }
 
       return 'Error generating content. Check your configured model.';
+    }
+
+    let data: any;
+    try {
+      data = await response.json();
+    } catch {
+      return 'Error generating content. The server returned an invalid response.';
     }
 
     const assistantResponse =

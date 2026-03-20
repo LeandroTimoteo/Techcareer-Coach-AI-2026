@@ -2,6 +2,7 @@
 import path from "path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
   // 🔎 Carrega todas as variáveis do .env.local
@@ -19,27 +20,32 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       open: true,
       allowedHosts: true,
+      proxy: {
+        "/api": {
+          target: "http://localhost:10000",
+          changeOrigin: true,
+        },
+      },
     },
     preview: {
       port: 4173,
       host: "0.0.0.0",
       allowedHosts: true, // ✅ libera todos os domínios para evitar erros de bloqueio
     },
-    plugins: [react()],
+    plugins: [react(), ...(!process.env.VITEST ? [tailwindcss()] : [])],
     test: {
       globals: true,
       environment: "jsdom",
+      server: {
+        deps: {
+          inline: ["@tailwindcss/vite"],
+        },
+      },
     },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "."),
       },
-    },
-    define: {
-      // ✅ Injeta as variáveis para uso no import.meta.env
-      "import.meta.env.VITE_OLLAMA_API_KEY": JSON.stringify(env.VITE_OLLAMA_API_KEY),
-      "import.meta.env.VITE_OLLAMA_API_URL": JSON.stringify(env.VITE_OLLAMA_API_URL),
-      "import.meta.env.VITE_MODEL_ID": JSON.stringify(env.VITE_MODEL_ID),
     },
   };
 });

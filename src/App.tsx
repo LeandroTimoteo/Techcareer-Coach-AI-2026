@@ -79,8 +79,15 @@ export default function App() {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        const message = text || `${response.status} ${response.statusText}`;
+        let message = `${response.status} ${response.statusText}`;
+        try {
+          const errorBody = await response.json();
+          message = errorBody?.error || message;
+        } catch {
+          const text = await response.text();
+          message = text || message;
+        }
+
         console.error("Chat API retornou erro:", message);
         throw new Error(message);
       }
